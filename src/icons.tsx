@@ -15,6 +15,8 @@ const PATHS = {
   bar: 'M4 4v16h16M8 16v-4M12 16V8M16 16v-6',
   tag: 'M3 3h8l10 10-8 8L3 11zM8 8h0',
   notes: 'M5 4h14v16H5zM9 9h6M9 13h6M9 17h3',
+  backup: 'M4 14v6h16v-6M12 4v10M8 10l4 4 4-4',
+  upload: 'M4 14v6h16v-6M12 14V4M8 8l4-4 4 4',
 };
 
 export type IconName = keyof typeof PATHS;

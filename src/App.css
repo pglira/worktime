@@ -630,3 +630,27 @@ ul.label-totals {
 .bars.month {
   gap: 2px;
 }
+
+.file-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sheet .file-button,
+.sheet .replace {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  background: var(--control);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.sheet .replace {
+  background: var(--danger);
+  color: #fff;
+}

@@ -1,4 +1,5 @@
 import {
+  type ChangeEvent,
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
@@ -6,7 +7,9 @@ import {
   useRef,
   useState,
 } from 'react';
+import { type Backup, exportBackup, readBackup, restoreBackup } from './backup';
 import {
+  APP_ID,
   COLORS,
   type Block,
   type Data,
@@ -17,6 +20,7 @@ import {
   formatDuration,
   formatHours,
   fromInputTime,
+  isDataKey,
   loadData,
   nextColor,
   overlap,
@@ -47,7 +51,11 @@ const THEME_LABELS: Record<Theme, string> = {
 // The open sheet. A block id of null makes a new block. A block sheet with
 // stopped set opens right after the stop of the block, with the focus on the
 // notes.
-type Sheet = { kind: 'block'; id: string | null; stopped?: boolean } | { kind: 'labels' } | null;
+type Sheet =
+  | { kind: 'block'; id: string | null; stopped?: boolean }
+  | { kind: 'labels' }
+  | { kind: 'backup' }
+  | null;
 
 type Route = 'overview' | null;
 
@@ -125,7 +133,13 @@ export default function App() {
   return (
     <main>
       {route === 'overview' ? (
-        <OverviewPage data={data} now={now} themeButton={themeButton} onBack={() => go(null)} />
+        <OverviewPage
+          data={data}
+          now={now}
+          themeButton={themeButton}
+          onBack={() => go(null)}
+          onBackup={() => setSheet({ kind: 'backup' })}
+        />
       ) : (
         <StartPage
           data={data}
@@ -171,6 +185,8 @@ export default function App() {
           }
         />
       )}
+
+      {sheet?.kind === 'backup' && <BackupSheet onClose={close} />}
 
       {sheet?.kind === 'labels' && (
         <LabelsSheet
@@ -412,7 +428,19 @@ function periodTitle(period: Period, from: number, to: number): string {
 
 // The time of one week or one month: totals, a bar per day, the time per
 // label and the blocks of each day with their notes.
-function OverviewPage({ data, now, themeButton, onBack }: { data: Data; now: number; themeButton: ReactNode; onBack: () => void }) {
+function OverviewPage({
+  data,
+  now,
+  themeButton,
+  onBack,
+  onBackup,
+}: {
+  data: Data;
+  now: number;
+  themeButton: ReactNode;
+  onBack: () => void;
+  onBackup: () => void;
+}) {
   const [period, setPeriod] = useState<Period>(loadPeriod);
   const [shift, setShift] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -481,7 +509,12 @@ function OverviewPage({ data, now, themeButton, onBack }: { data: Data; now: num
           </button>
           <h1>Overview</h1>
         </div>
-        <div className="header-buttons">{themeButton}</div>
+        <div className="header-buttons">
+          <button className="icon" onClick={onBackup} aria-label="Backup" title="Backup">
+            <Icon name="backup" />
+          </button>
+          {themeButton}
+        </div>
       </header>
 
       <div className="ranges" role="radiogroup" aria-label="Period">
@@ -1000,6 +1033,67 @@ function LabelsSheet(props: {
       <div className="buttons">
         <button type="button" className="primary" onClick={props.onClose}>
           Done
+        </button>
+      </div>
+    </SheetFrame>
+  );
+}
+
+const backupDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+// Export all data to a backup file, or replace all data with the data of a
+// backup file. The replacement needs a second tap and reloads the app.
+function BackupSheet({ onClose }: { onClose: () => void }) {
+  const [backup, setBackup] = useState<Backup | null>(null);
+  const [error, setError] = useState('');
+
+  const importFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Clear the input so that the same file can be selected again.
+    e.target.value = '';
+    if (!file) return;
+    try {
+      setBackup(readBackup(await file.text(), APP_ID));
+      setError('');
+    } catch (err) {
+      setBackup(null);
+      setError(err instanceof Error ? err.message : 'The file cannot be read.');
+    }
+  };
+
+  return (
+    <SheetFrame title="Backup" onCancel={onClose} onSubmit={onClose}>
+      <p className="muted">Export all data to a file. Import the file on the new phone.</p>
+      <div className="file-buttons">
+        <button type="button" className="file-button" onClick={() => exportBackup(APP_ID, isDataKey)}>
+          <Icon name="backup" size={18} />
+          Export
+        </button>
+        <label className="file-button">
+          <Icon name="upload" size={18} />
+          Import
+          <input type="file" accept="application/json,.json" hidden onChange={importFile} />
+        </label>
+      </div>
+      {error && <p className="error">{error}</p>}
+      {backup && (
+        <>
+          <p className="muted">Backup of {backupDate.format(new Date(backup.exported))}</p>
+          <button
+            type="button"
+            className="replace"
+            onClick={() => {
+              restoreBackup(backup, isDataKey);
+              location.reload();
+            }}
+          >
+            Tap to replace all data
+          </button>
+        </>
+      )}
+      <div className="buttons">
+        <button type="submit" className="primary">
+          Close
         </button>
       </div>
     </SheetFrame>

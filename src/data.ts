@@ -22,6 +22,12 @@ export interface Data {
 
 const STORAGE_KEY = 'worktime.v1';
 
+// The id of the app in backup files.
+export const APP_ID = 'worktime';
+
+// The storage keys that a backup holds: all keys of the app except the theme.
+export const isDataKey = (key: string) => key.startsWith('worktime.') && key !== 'worktime.theme';
+
 // Colors that the user can select for a label.
 export const COLORS = [
   '#43a047',

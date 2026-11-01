@@ -8,6 +8,7 @@ A Progressive Web App that tracks working time.
 - The start page shows the timer, the totals of today, this week and this month, and the blocks of the last 7 days.
 - The overview shows one week or one month: totals, a bar per day, the time per label and the blocks of each day with their notes. "Copy as text" copies a report of the period.
 - Tap + to add a time block that you did not track live. Swipe a block to the left to show Edit and Delete.
+- Back up all data to a file and import it on a new phone: tap the backup button in the header of the overview. The import replaces all data after a second tap.
 
 ## Tech
 
