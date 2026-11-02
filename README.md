@@ -4,7 +4,7 @@ A Progressive Web App that tracks working time.
 
 - Tap Start when work starts and Stop when it ends.
 - After Stop, the notes of the time block open: a list of items, for example the tasks done.
-- Attach labels to a time block, for example projects. A new block gets the labels of the last block.
+- Attach labels to a time block, for example projects. The label menu adds, renames, recolors and deletes labels; the block form selects from them. A new block gets the labels of the last block.
 - The start page shows the timer, the totals of today, this week and this month, and the blocks of the last 7 days.
 - The overview shows one week or one month: totals, a bar per day, the time per label and the blocks of each day with their notes. "Copy as text" copies a report of the period.
 - Tap + to add a time block that you did not track live. Swipe a block to the left to show Edit and Delete.

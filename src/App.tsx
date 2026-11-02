@@ -165,11 +165,6 @@ export default function App() {
           stopped={sheet.stopped ?? false}
           now={now}
           lastEnd={lastEnd(data, sheet.id)}
-          onAddLabel={(name) => {
-            const id = crypto.randomUUID();
-            setData((d) => saveLabel(d, { id, name, color: nextColor(d.labels) }));
-            return id;
-          }}
           onCancel={close}
           onSave={(block) => {
             setData((d) => saveBlock(d, block, sheet.id));
@@ -875,7 +870,6 @@ interface BlockFormProps {
   now: number;
   // The latest end of the other blocks, or null when no other block ended.
   lastEnd: number | null;
-  onAddLabel: (name: string) => string;
   onSave: (block: Omit<Block, 'id'>) => void;
   onCancel: () => void;
   onDelete?: () => void;
@@ -888,29 +882,20 @@ function lastEnd(data: Data, except: string | null): number | null {
   return ends.length ? Math.max(...ends) : null;
 }
 
-// Edit the notes, the labels and the times of a block. A new block ends now
-// and starts one hour earlier.
+// Edit the notes, the labels and the times of a block. The form selects from
+// the existing labels; the labels sheet adds labels. A new block ends now and
+// starts one hour earlier.
 function BlockForm(props: BlockFormProps) {
-  const { block, labels, stopped, now, onAddLabel, onSave, onCancel, onDelete } = props;
+  const { block, labels, stopped, now, onSave, onCancel, onDelete } = props;
   const [notes, setNotes] = useState(block?.notes ?? []);
   const [draft, setDraft] = useState('');
   const [labelIds, setLabelIds] = useState(block?.labelIds ?? []);
-  const [newLabel, setNewLabel] = useState('');
   const [startTime, setStart] = useState(() => block?.start ?? now - 60 * 60 * 1000);
   const [endTime, setEnd] = useState(() => (block ? block.end : now));
   // The time field that the controls of the time picker change.
   const [field, setField] = useState<Field>(stopped ? 'end' : 'start');
   const valid = endTime === null || endTime >= startTime;
   const duration = valid ? (endTime ?? now) - startTime : 0;
-
-  const addLabel = () => {
-    const name = newLabel.trim();
-    if (!name) return;
-    const existing = labels.find((l) => l.name.toLowerCase() === name.toLowerCase());
-    const id = existing?.id ?? onAddLabel(name);
-    setLabelIds((ids) => (ids.includes(id) ? ids : [...ids, id]));
-    setNewLabel('');
-  };
 
   const title = stopped ? `Stopped · ${formatDuration(duration)}` : block ? `Time block · ${formatDuration(duration)}` : 'New time block';
 
@@ -931,26 +916,12 @@ function BlockForm(props: BlockFormProps) {
         <span className="field-label">Notes</span>
         <NotesEditor notes={notes} draft={draft} autoFocus={stopped} onNotes={setNotes} onDraft={setDraft} />
       </div>
-      <div className="field">
-        <span className="field-label">Labels</span>
-        <LabelChips labels={labels} selected={labelIds} onToggle={(id) => setLabelIds((ids) => toggle(ids, id))} />
-        <div className="note-row">
-          <input
-            value={newLabel}
-            placeholder="New label"
-            aria-label="New label"
-            onChange={(e) => setNewLabel(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter') return;
-              e.preventDefault();
-              addLabel();
-            }}
-          />
-          <button type="button" className="icon" disabled={newLabel.trim() === ''} onClick={addLabel} aria-label="Add label" title="Add label">
-            <Icon name="plus" />
-          </button>
+      {labels.length > 0 && (
+        <div className="field">
+          <span className="field-label">Labels</span>
+          <LabelChips labels={labels} selected={labelIds} onToggle={(id) => setLabelIds((ids) => toggle(ids, id))} />
         </div>
-      </div>
+      )}
       <TimePicker
         start={startTime}
         end={endTime}
