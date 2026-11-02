@@ -19,7 +19,6 @@ import {
   days,
   formatDuration,
   formatHours,
-  fromInputTime,
   isDataKey,
   loadData,
   nextColor,
@@ -35,11 +34,11 @@ import {
   startBlock,
   startOfDay,
   stopBlock,
-  toInputTime,
   total,
 } from './data';
 import { Icon, type IconName } from './icons';
 import { type Theme, useTheme } from './theme';
+import { type Field, TimePicker } from './TimePicker';
 
 const THEME_ICONS: Record<Theme, IconName> = { auto: 'auto', light: 'sun', dark: 'moon' };
 const THEME_LABELS: Record<Theme, string> = {
@@ -165,6 +164,7 @@ export default function App() {
           labels={data.labels}
           stopped={sheet.stopped ?? false}
           now={now}
+          lastEnd={lastEnd(data, sheet.id)}
           onAddLabel={(name) => {
             const id = crypto.randomUUID();
             setData((d) => saveLabel(d, { id, name, color: nextColor(d.labels) }));
@@ -873,27 +873,34 @@ interface BlockFormProps {
   labels: Label[];
   stopped: boolean;
   now: number;
+  // The latest end of the other blocks, or null when no other block ended.
+  lastEnd: number | null;
   onAddLabel: (name: string) => string;
   onSave: (block: Omit<Block, 'id'>) => void;
   onCancel: () => void;
   onDelete?: () => void;
 }
 
+// The latest end of all blocks except the block with the id `except`, or null
+// when no other block ended.
+function lastEnd(data: Data, except: string | null): number | null {
+  const ends = data.blocks.filter((b) => b.id !== except && b.end !== null).map((b) => b.end!);
+  return ends.length ? Math.max(...ends) : null;
+}
+
 // Edit the notes, the labels and the times of a block. A new block ends now
 // and starts one hour earlier.
-function BlockForm({ block, labels, stopped, now, onAddLabel, onSave, onCancel, onDelete }: BlockFormProps) {
+function BlockForm(props: BlockFormProps) {
+  const { block, labels, stopped, now, onAddLabel, onSave, onCancel, onDelete } = props;
   const [notes, setNotes] = useState(block?.notes ?? []);
   const [draft, setDraft] = useState('');
   const [labelIds, setLabelIds] = useState(block?.labelIds ?? []);
   const [newLabel, setNewLabel] = useState('');
-  const [initialStart] = useState(() => block?.start ?? now - 60 * 60 * 1000);
-  const [initialEnd] = useState(() => (block ? block.end : now));
-  const [start, setStart] = useState(() => toInputTime(initialStart));
-  const [end, setEnd] = useState(() => (initialEnd === null ? null : toInputTime(initialEnd)));
-  // The inputs show minutes only; an unchanged input keeps the exact time.
-  const startTime = start === toInputTime(initialStart) ? initialStart : fromInputTime(start);
-  const endTime = end === null ? null : initialEnd !== null && end === toInputTime(initialEnd) ? initialEnd : fromInputTime(end);
-  const valid = startTime !== null && (end === null || (endTime !== null && endTime >= startTime));
+  const [startTime, setStart] = useState(() => block?.start ?? now - 60 * 60 * 1000);
+  const [endTime, setEnd] = useState(() => (block ? block.end : now));
+  // The time field that the controls of the time picker change.
+  const [field, setField] = useState<Field>(stopped ? 'end' : 'start');
+  const valid = endTime === null || endTime >= startTime;
   const duration = valid ? (endTime ?? now) - startTime : 0;
 
   const addLabel = () => {
@@ -944,23 +951,18 @@ function BlockForm({ block, labels, stopped, now, onAddLabel, onSave, onCancel, 
           </button>
         </div>
       </div>
-      <div className="row">
-        <label className="grow">
-          Start
-          <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} />
-        </label>
-        <label className="grow">
-          End
-          {end === null ? (
-            <input value="Running" disabled />
-          ) : (
-            <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
-          )}
-        </label>
-      </div>
-      {end !== null && endTime !== null && startTime !== null && endTime < startTime && (
-        <p className="error">The end is before the start.</p>
-      )}
+      <TimePicker
+        start={startTime}
+        end={endTime}
+        field={field}
+        now={now}
+        lastEnd={props.lastEnd}
+        canRun={block?.end === null}
+        onField={setField}
+        onStart={setStart}
+        onEnd={setEnd}
+      />
+      {!valid && <p className="error">The end is before the start.</p>}
       <div className="buttons">
         {onDelete && <DeleteButton onDelete={onDelete} />}
         {!stopped && (

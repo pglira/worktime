@@ -654,3 +654,102 @@ ul.label-totals {
   background: var(--danger);
   color: #fff;
 }
+
+/* The time picker: two cards for the start and the end, and the controls for
+   the selected card. All controls are buttons with a minimum height of 40px,
+   so that they are easy to tap. */
+.time-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.time-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.time-card {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--bg);
+  border: 2px solid var(--border);
+}
+
+.time-card[aria-selected='true'] {
+  border-color: var(--accent);
+}
+
+.time-card-label,
+.time-card-day {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.time-card-clock {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-days,
+.time-hours,
+.time-minutes,
+.time-shortcuts {
+  display: grid;
+  gap: 3px;
+}
+
+.time-days {
+  grid-template-columns: 40px 1fr 40px auto auto;
+  align-items: stretch;
+}
+
+.time-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.time-hours {
+  grid-template-columns: repeat(8, 1fr);
+}
+
+.time-minutes {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.time-shortcuts {
+  grid-template-columns: 1.7fr 1.2fr repeat(6, 1fr);
+}
+
+.time-picker button:not(.time-card) {
+  min-height: 40px;
+  padding: 0 4px;
+  background: var(--control);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.time-days button:not(.time-step) {
+  padding: 0 10px;
+}
+
+.time-picker button[aria-pressed='true'] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.time-shortcuts button {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.time-picker .time-run {
+  justify-self: end;
+  padding: 0 14px;
+}

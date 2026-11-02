@@ -188,14 +188,3 @@ export function formatHours(ms: number): string {
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
-
-// The local time in the format of an <input type="datetime-local">.
-export function toInputTime(time: number): string {
-  const d = new Date(time);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-export function fromInputTime(text: string): number | null {
-  const time = new Date(text).getTime();
-  return Number.isNaN(time) ? null : time;
-}
