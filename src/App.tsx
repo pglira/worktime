@@ -48,8 +48,8 @@ const THEME_LABELS: Record<Theme, string> = {
 };
 
 // The open sheet. A block id of null makes a new block. A block sheet with
-// stopped set opens right after the stop of the block, with the focus on the
-// notes.
+// stopped set opens right after the stop of the block. No field has the
+// focus, so that the keyboard stays closed until the user taps a field.
 type Sheet =
   | { kind: 'block'; id: string | null; stopped?: boolean }
   | { kind: 'labels' }
@@ -805,7 +805,6 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
 function NotesEditor(props: {
   notes: string[];
   draft: string;
-  autoFocus: boolean;
   onNotes: (notes: string[]) => void;
   onDraft: (draft: string) => void;
 }) {
@@ -832,7 +831,6 @@ function NotesEditor(props: {
       ))}
       <div className="note-row">
         <input
-          autoFocus={props.autoFocus}
           value={draft}
           enterKeyHint="enter"
           placeholder={notes.length === 0 ? 'What did you do?' : 'Next item'}
@@ -914,7 +912,7 @@ function BlockForm(props: BlockFormProps) {
     <SheetFrame title={title} onCancel={stopped ? () => save() || onCancel() : onCancel} onSubmit={save}>
       <div className="field">
         <span className="field-label">Notes</span>
-        <NotesEditor notes={notes} draft={draft} autoFocus={stopped} onNotes={setNotes} onDraft={setDraft} />
+        <NotesEditor notes={notes} draft={draft} onNotes={setNotes} onDraft={setDraft} />
       </div>
       {labels.length > 0 && (
         <div className="field">
